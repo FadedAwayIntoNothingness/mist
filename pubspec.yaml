@@ -1,0 +1,47 @@
+name: mist_aqi
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.1
+  provider: ^6.0.5
+  flutter_local_notifications: ^16.3.3
+  shared_preferences: ^2.2.0
+  google_maps_flutter: ^2.5.0
+  location: ^5.0.3
+  latlong2: ^0.9.0
+  flutter_map: ^8.1.1
+  geolocator: ^10.0.0
+  permission_handler: ^11.3.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1
+
+  flutter_lints: ^5.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/app_icon.png"
+
+flutter_local_notifications:
+  default_package: flutter_local_notifications
+  platforms:
+    android:
+    ios:
+
+flutter:
+  assets:
+    - assets/loading.gif
+  uses-material-design: true
