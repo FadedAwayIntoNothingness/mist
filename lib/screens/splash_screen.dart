@@ -21,15 +21,15 @@ class _SplashScreenState extends State<SplashScreen>
     "Fetching Air Quality...",
     "Checking Weather...",
     "Exploring the Sky...",
-    "Patience is key..."
+    "Patience is key...",
     "Checking Server...",
     "Preparing Coffee...",
     "Reading Sensors...",
-    "We're almost there..."
-    "Open up the Skies..."
+    "We're almost there...",
+    "Open up the Skies...",
     "Assembling Data...",
     "Just a bit more...",
-    "Almost there..."
+    "Almost there...",
     "Resonating Frequencies...",
     "Preparing the Journey...",
     "Aligning Stars...",
