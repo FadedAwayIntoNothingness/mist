@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import '../providers/aqi_provider.dart';
 import '../utils/constants.dart';
 import 'setting_screen.dart';
+import 'minigame_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -59,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _selectedIndex,
         children: [
           _buildAQIContent(theme),
+          const MinigameScreen(),
           const SettingScreen(),
         ],
       ),
@@ -69,6 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
             label: 'แผนที่',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.videogame_asset),
+            label: 'มินิเกม',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

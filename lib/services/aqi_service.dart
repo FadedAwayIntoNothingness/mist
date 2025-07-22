@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
-import 'package:location/location.dart';
+import 'package:geocoding/geocoding.dart' as geo;
+import 'package:intl/intl.dart';
 
 class AqiService {
   static const String _token = '7b2ed38ad4ad1782e0305c54968283fb202085ee';
@@ -36,69 +37,80 @@ class AqiNotifier {
 
   AqiNotifier(this.flutterLocalNotificationsPlugin);
 
-  Future<void> showStickyAQINotification(int aqi) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+  Future<void> showStickyAQINotification(int aqi, String locationName) async {
+    String advice = _getAdvice(aqi);
+    String time = DateFormat('hh:mm a').format(DateTime.now());
+
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'aqi_channel_id',
       'AQI Notifications',
       channelDescription: 'Persistent AQI notifications',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.low,
+      priority: Priority.low,
       ongoing: true,
       autoCancel: false,
+      showWhen: false,
+      playSound: false,
+      enableVibration: false,
+      styleInformation: BigTextStyleInformation(
+        'AQI $aqi • $advice\n📍 $locationName',
+      ),
     );
 
-    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+    final NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
 
     await flutterLocalNotificationsPlugin.show(
       0,
-      'Current AQI',
-      'AQI is $aqi',
+      '🌫️ Air Quality at $time',
+      'AQI $aqi • $advice', // ใช้ข้อความย่อใน collapsed view
       platformDetails,
     );
   }
 
-  Future<void> checkAndNotify() async {
-    final location = Location();
-
-    bool serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
-        print('❌ Location service not enabled');
-        return;
-      }
-    }
-
-    PermissionStatus permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        print('❌ Location permission not granted');
-        return;
-      }
-    }
-
-    final userLocation = await location.getLocation();
-    final lat = userLocation.latitude ?? 13.7563;
-    final lon = userLocation.longitude ?? 100.5018;
-
+  Future<void> checkAndNotify(double lat, double lon) async {
     final aqi = await AqiService().fetchCurrentAQI(lat, lon);
+
+    String locationName = 'Unknown Location';
+    try {
+      final placemarks = await geo.placemarkFromCoordinates(lat, lon);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        locationName =
+            '${place.locality ?? place.subAdministrativeArea ?? 'Unknown'}, ${place.administrativeArea ?? ''}';
+      }
+    } catch (e) {
+      print('❌ Reverse geocoding failed: $e');
+    }
+
     if (aqi != null) {
-      print('✅ Current AQI: $aqi');
-      await showStickyAQINotification(aqi);
+      print('✅ Current AQI: $aqi at $locationName');
+      await showStickyAQINotification(aqi, locationName);
     } else {
       print('❌ Failed to fetch AQI');
     }
   }
 
-  void startPeriodicCheck({Duration interval = const Duration(minutes: 5)}) {
+  void startPeriodicCheck({
+    required double lat,
+    required double lon,
+    Duration interval = const Duration(minutes: 5),
+  }) {
     _timer?.cancel();
     _timer = Timer.periodic(interval, (_) async {
-      await checkAndNotify();
+      await checkAndNotify(lat, lon);
     });
   }
 
   void dispose() {
     _timer?.cancel();
+  }
+
+  String _getAdvice(int aqi) {
+    if (aqi <= 50) return "Great air today! 🟢 Enjoy the outdoors.";
+    if (aqi <= 100) return "Moderate air. 🟡 Sensitive people be cautious.";
+    if (aqi <= 150) return "Unhealthy for sensitive groups. 🟠 Limit outdoor time.";
+    if (aqi <= 200) return "Unhealthy. 🔴 Consider staying inside.";
+    if (aqi <= 300) return "Very Unhealthy. 🟣 Avoid going outside.";
+    return "Hazardous! 🛑 Stay indoors and keep windows closed.";
   }
 }

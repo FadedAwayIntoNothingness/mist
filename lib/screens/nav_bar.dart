@@ -24,6 +24,10 @@ class NavBar extends StatelessWidget {
           label: 'หน้าหลัก',
         ),
         BottomNavigationBarItem(
+          icon: Icon(Icons.videogame_asset),
+          label: 'มินิเกม',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.settings),
           label: 'ตั้งค่า',
         ),

@@ -25,10 +25,28 @@ void main() async {
   await _showNotification('MIST', 'Welcome to MIST AQI!');
   print('✅ Welcome notification shown');
 
+  Position? userPosition;
+  try {
+    userPosition = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    print('📍 Got user location: ${userPosition.latitude}, ${userPosition.longitude}');
+  } catch (e) {
+    print('❌ Failed to get user location: $e');
+  }
+
   final aqiNotifier = AqiNotifier(flutterLocalNotificationsPlugin);
-  await aqiNotifier.checkAndNotify();
-  aqiNotifier.startPeriodicCheck();
-  print('✅ AQI check started');
+
+  if (userPosition != null) {
+    await aqiNotifier.checkAndNotify(userPosition.latitude, userPosition.longitude);
+    aqiNotifier.startPeriodicCheck(
+      lat: userPosition.latitude,
+      lon: userPosition.longitude,
+    );
+    print('✅ AQI check started with user location');
+  } else {
+    print('⚠️ AQI check skipped: no location available');
+  }
 
   runApp(
     MultiProvider(

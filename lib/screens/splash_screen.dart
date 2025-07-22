@@ -40,6 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
   double _progress = 0.0;
   Timer? _progressTimer;
   Timer? _postLoadProgressTimer;
+  int selectedGame = 0;
 
   @override
   void initState() {
@@ -112,9 +113,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    if (isMinigameOpen) {
-
-    } else {
+    if (!isMinigameOpen) {
       _goToHome();
     }
   }
@@ -133,20 +132,18 @@ class _SplashScreenState extends State<SplashScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _ColorPopGame(
-        onExit: () {
-          Navigator.of(context).pop();
-          setState(() {
-            isMinigameOpen = false;
-          });
-
-          if (isLoadingDone) {
-            _goToHome();
-          }
-        },
-        isLoadingDone: isLoadingDone,
-      ),
+      builder: (_) => selectedGame == 0
+          ? ColorPopGame(onExit: _closeMinigame, isLoadingDone: isLoadingDone)
+          : BlockBlastGame(onExit: _closeMinigame, isLoadingDone: isLoadingDone),
     );
+  }
+
+  void _closeMinigame() {
+    Navigator.of(context).pop();
+    setState(() {
+      isMinigameOpen = false;
+    });
+    if (isLoadingDone) _goToHome();
   }
 
   @override
@@ -166,16 +163,9 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                  'assets/loading.gif',
-                  width: 160,
-                  height: 160,
-                ),
+                Image.asset('assets/loading.gif', width: 160, height: 160),
                 const SizedBox(height: 20),
-                Text(
-                  currentMessage,
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
-                ),
+                Text(currentMessage, style: const TextStyle(color: Colors.white70, fontSize: 16)),
                 const SizedBox(height: 30),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 60),
@@ -197,12 +187,12 @@ class _SplashScreenState extends State<SplashScreen> {
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
                             width: MediaQuery.of(context).size.width * _progress.clamp(0.0, 1.0) * 0.6,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  Color(0xFF7F7FD5), 
-                                  Color(0xFF86A8E7), 
-                                  Color(0xFF91EAE4), 
+                                  Color(0xFF7F7FD5),
+                                  Color(0xFF86A8E7),
+                                  Color(0xFF91EAE4),
                                 ],
                               ),
                             ),
@@ -213,6 +203,19 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 30),
+                ToggleButtons(
+                  isSelected: [selectedGame == 0, selectedGame == 1],
+                  onPressed: (index) => setState(() => selectedGame = index),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white,
+                  selectedColor: Colors.black,
+                  fillColor: Colors.lightBlueAccent,
+                  children: const [
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text("Mist Pop")),
+                    Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text("Mist Blast")),
+                  ],
+                ),
+                const SizedBox(height: 10),
                 ElevatedButton.icon(
                   onPressed: _openMinigame,
                   icon: const Icon(Icons.videogame_asset),
@@ -245,23 +248,286 @@ class _SplashScreenState extends State<SplashScreen> {
 }
 
 // --------------------------------------------------
-//                    MINIGAME
+//                   MIST BLAST GAME
 // --------------------------------------------------
 
-class _ColorPopGame extends StatefulWidget {
+class BlockBlastGame extends StatefulWidget {
   final VoidCallback onExit;
   final bool isLoadingDone;
 
-  const _ColorPopGame({
+  const BlockBlastGame({required this.onExit, required this.isLoadingDone});
+
+  @override
+  State<BlockBlastGame> createState() => _BlockBlastGameState();
+}
+
+class _BlockBlastGameState extends State<BlockBlastGame> {
+  final int gridSize = 9;
+  late List<List<int>> board;
+
+  final List<List<List<int>>> predefinedShapes = [
+    [[1, 1, 1]], // I horizontal
+    [[1], [1], [1]], // I vertical
+    [[1, 1], [1, 0]], // L
+    [[1, 1], [0, 1]], // J
+    [[1, 1], [1, 1]], // O
+    [[1, 1, 1], [0, 1, 0]], // T
+    [[1]], // Dot
+  ];
+
+  List<List<List<int>>> currentBlocks = [];
+  int score = 0;
+
+  Offset? hoveredPosition;
+  List<List<int>>? hoveredShape;
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    board = List.generate(gridSize, (_) => List.filled(gridSize, 0));
+    _generateNewBlocks();
+  }
+
+  void _generateNewBlocks() {
+    final rand = Random();
+    List<List<List<int>>> newBlocks = [];
+    int attempt = 0;
+
+    while (newBlocks.length < 3 && attempt < 100) {
+      final shape = predefinedShapes[rand.nextInt(predefinedShapes.length)];
+      if (_canPlaceAnywhere(shape)) {
+        newBlocks.add(shape);
+      }
+      attempt++;
+    }
+
+    setState(() {
+      currentBlocks = newBlocks;
+    });
+  }
+
+  bool _canPlaceAnywhere(List<List<int>> shape) {
+    for (int y = 0; y <= gridSize - shape.length; y++) {
+      for (int x = 0; x <= gridSize - shape[0].length; x++) {
+        if (_canPlace(shape, x, y)) return true;
+      }
+    }
+    return false;
+  }
+
+  bool _canPlace(List<List<int>> shape, int startX, int startY) {
+    for (int y = 0; y < shape.length; y++) {
+      for (int x = 0; x < shape[0].length; x++) {
+        if (shape[y][x] == 1) {
+          int boardX = startX + x;
+          int boardY = startY + y;
+          if (boardX >= gridSize || boardY >= gridSize || board[boardY][boardX] == 1) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  void _placeShape(List<List<int>> shape, int startX, int startY) async {
+    setState(() {
+      for (int y = 0; y < shape.length; y++) {
+        for (int x = 0; x < shape[0].length; x++) {
+          if (shape[y][x] == 1) {
+            board[startY + y][startX + x] = 1;
+          }
+        }
+      }
+      hoveredShape = null;
+      hoveredPosition = null;
+    });
+
+    await _audioPlayer.play(AssetSource('minigamesfx.mp3'));
+    _clearFullLines();
+    _generateNewBlocks();
+  }
+
+  void _clearFullLines() {
+    int linesCleared = 0;
+
+    for (int y = 0; y < gridSize; y++) {
+      if (board[y].every((cell) => cell == 1)) {
+        board[y] = List.filled(gridSize, 0);
+        linesCleared++;
+      }
+    }
+
+    for (int x = 0; x < gridSize; x++) {
+      if (List.generate(gridSize, (y) => board[y][x]).every((cell) => cell == 1)) {
+        for (int y = 0; y < gridSize; y++) {
+          board[y][x] = 0;
+        }
+        linesCleared++;
+      }
+    }
+
+    if (linesCleared > 0) {
+      setState(() {
+        score += linesCleared * 10;
+      });
+    }
+  }
+
+  Widget _buildBlockCell(bool filled, {bool highlight = false}) {
+    return Container(
+      margin: const EdgeInsets.all(1),
+      decoration: BoxDecoration(
+        color: filled
+            ? Colors.white.withAlpha((0.9 * 255).round())
+            : highlight
+                ? Colors.lightBlueAccent.withAlpha(120)
+                : Colors.blueGrey[800],
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+
+  Widget _buildShape(List<List<int>> shape, double size) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: shape.map((row) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: row.map((cell) {
+            return Container(
+              width: size,
+              height: size,
+              margin: const EdgeInsets.all(1),
+              decoration: BoxDecoration(
+                color: cell == 1 ? Colors.lightBlueAccent.shade100 : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }).toList(),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildDraggableShape(List<List<int>> shape) {
+    return Draggable<List<List<int>>>(
+      data: shape,
+      feedback: _buildShape(shape, 24),
+      childWhenDragging: Opacity(opacity: 0.3, child: _buildShape(shape, 24)),
+      child: _buildShape(shape, 24),
+    );
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.indigo.shade900,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("🧱 Block Blast", style: TextStyle(color: Colors.white, fontSize: 20)),
+            const SizedBox(height: 10),
+            Text("Score: $score", style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 270,
+              height: 270,
+              child: GridView.builder(
+                itemCount: gridSize * gridSize,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: gridSize),
+                itemBuilder: (context, index) {
+                  final x = index % gridSize;
+                  final y = index ~/ gridSize;
+
+                  bool highlight = false;
+                  if (hoveredShape != null && hoveredPosition != null) {
+                    final hx = hoveredPosition!.dx.toInt();
+                    final hy = hoveredPosition!.dy.toInt();
+                    final shape = hoveredShape!;
+                    for (int sy = 0; sy < shape.length; sy++) {
+                      for (int sx = 0; sx < shape[0].length; sx++) {
+                        if (shape[sy][sx] == 1 && hx + sx == x && hy + sy == y) {
+                          highlight = _canPlace(shape, hx, hy);
+                        }
+                      }
+                    }
+                  }
+
+                  return DragTarget<List<List<int>>>(
+                    onWillAcceptWithDetails: (details) {
+                      setState(() {
+                        hoveredShape = details.data;
+                        hoveredPosition = Offset(x.toDouble(), y.toDouble());
+                      });
+                      return _canPlace(details.data, x, y);
+                    },
+                    onLeave: (data) {
+                      setState(() {
+                        hoveredShape = null;
+                        hoveredPosition = null;
+                      });
+                    },
+                    onAcceptWithDetails: (details) {
+                      _placeShape(details.data, x, y);
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      return _buildBlockCell(board[y][x] == 1, highlight: highlight);
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: currentBlocks.map(_buildDraggableShape).toList(),
+            ),
+            const SizedBox(height: 20),
+            if (widget.isLoadingDone)
+              const Text("✅ Don't rage quit please", style: TextStyle(color: Colors.greenAccent)),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: widget.onExit,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent),
+              child: const Text("Exit Game", style: TextStyle(color: Colors.black)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --------------------------------------------------
+//                   MIST POP MINIGAME
+// --------------------------------------------------
+
+class ColorPopGame extends StatefulWidget {
+  final VoidCallback onExit;
+  final bool isLoadingDone;
+
+  const ColorPopGame({
     required this.onExit,
     required this.isLoadingDone,
   });
 
   @override
-  State<_ColorPopGame> createState() => _ColorPopGameState();
+  State<ColorPopGame> createState() => ColorPopGameState();
 }
 
-class _ColorPopGameState extends State<_ColorPopGame> {
+class ColorPopGameState extends State<ColorPopGame> {
   final int gridSize = 3;
   int targetIndex = 0;
   int score = 0;
@@ -388,7 +654,7 @@ class _ColorPopGameState extends State<_ColorPopGame> {
             const SizedBox(height: 16),
             if (widget.isLoadingDone)
               const Text(
-                "✅ Air data is ready! You may exit anytime.",
+                "✅ Please don't escape us just like the mist block",
                 style: TextStyle(color: Colors.greenAccent),
                 textAlign: TextAlign.center,
               ),
