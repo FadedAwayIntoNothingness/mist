@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../providers/aqi_provider.dart';
 import '../utils/constants.dart';
+import 'setting_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -15,6 +16,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final MapController mapController = MapController();
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -35,48 +37,76 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
-      builder: (context) {
-        return const _RefreshingDialog();
-      },
+      builder: (context) => const _RefreshingDialog(),
     );
 
     await Future.delayed(const Duration(milliseconds: 2500));
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('MIST - My Invisible Shield Technology'),
-        backgroundColor: const Color.fromARGB(255, 0, 26, 41),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildAQIContent(theme),
+          const SettingScreen(),
+        ],
       ),
-      body: Consumer<AQIProvider>(
-        builder: (context, aqiProvider, child) {
-          LatLng center = provinceCoordinates[aqiProvider.selectedProvince] ??
-              LatLng(13.7563, 100.5018);
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onTabTapped,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'แผนที่',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'ตั้งค่า',
+          ),
+        ],
+      ),
+    );
+  }
 
-          final selectedAQI = aqiProvider.provinceAQIs[aqiProvider.selectedProvince];
+  Widget _buildAQIContent(ThemeData theme) {
+    return Consumer<AQIProvider>(
+      builder: (context, aqiProvider, child) {
+        LatLng center = provinceCoordinates[aqiProvider.selectedProvince] ??
+            LatLng(13.7563, 100.5018);
+        final selectedAQI =
+            aqiProvider.provinceAQIs[aqiProvider.selectedProvince];
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        return Column(
+          children: [
+            Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
                 child: DropdownButtonFormField<String>(
-                  dropdownColor: Colors.black87,
                   value: aqiProvider.selectedProvince,
                   decoration: InputDecoration(
                     labelText: 'เลือกจังหวัด',
-                    labelStyle: const TextStyle(color: Colors.white70),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: mistBlue),
-                      borderRadius: BorderRadius.circular(8),
+                    labelStyle: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  style: const TextStyle(color: Colors.white),
+                  dropdownColor: theme.cardColor,
+                  style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                   items: thaiProvinces
                       .map((prov) => DropdownMenuItem<String>(
                             value: prov,
@@ -86,159 +116,180 @@ class _HomeScreenState extends State<HomeScreen> {
                   onChanged: (value) {
                     if (value != null) {
                       aqiProvider.selectedProvince = value;
-                      setState(() {});
-                      final newCenter =
-                          provinceCoordinates[value] ?? LatLng(13.7563, 100.5018);
-                      mapController.move(newCenter, 7);
+                      setState(() {
+                        final newCenter = provinceCoordinates[value] ??
+                            LatLng(13.7563, 100.5018);
+                        mapController.move(newCenter, 7);
+                      });
                     }
                   },
                 ),
               ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    FlutterMap(
-                      mapController: mapController,
-                      options: MapOptions(
-                        initialCenter: center,
-                        initialZoom: 7,
-                        minZoom: 5,
-                        maxZoom: 13,
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: mapController,
+                    options: MapOptions(
+                      initialCenter: center,
+                      initialZoom: 7,
+                      minZoom: 5,
+                      maxZoom: 13,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.mist_aqi',
                       ),
+                      MarkerLayer(
+                        markers: aqiProvider.aqiMarkers,
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: Column(
                       children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          subdomains: ['a', 'b', 'c'],
-                          userAgentPackageName: 'com.example.mist_aqi',
-                        ),
-                        MarkerLayer(
-                          markers: aqiProvider.aqiMarkers,
-                        ),
+                        _buildZoomButton(Icons.zoom_in, () {
+                          final currentZoom = mapController.camera.zoom;
+                          mapController.move(
+                              mapController.camera.center, currentZoom + 1);
+                        }),
+                        const SizedBox(height: 8),
+                        _buildZoomButton(Icons.zoom_out, () {
+                          final currentZoom = mapController.camera.zoom;
+                          mapController.move(
+                              mapController.camera.center, currentZoom - 1);
+                        }),
                       ],
                     ),
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: Column(
-                        children: [
-                          FloatingActionButton(
-                            heroTag: 'zoom_in',
-                            mini: true,
-                            backgroundColor: Colors.black,
-                            onPressed: () {
-                              final currentZoom = mapController.camera.zoom;
-                              mapController.move(
-                                  mapController.camera.center, currentZoom + 1);
-                            },
-                            child: const Icon(Icons.zoom_in),
-                          ),
-                          const SizedBox(height: 8),
-                          FloatingActionButton(
-                            heroTag: 'zoom_out',
-                            mini: true,
-                            backgroundColor: Colors.black,
-                            onPressed: () {
-                              final currentZoom = mapController.camera.zoom;
-                              mapController.move(
-                                  mapController.camera.center, currentZoom - 1);
-                            },
-                            child: const Icon(Icons.zoom_out),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      top: 16,
-                      right: 16,
-                      child: Column(
-                        children: [
-                          FloatingActionButton(
-                            heroTag: 'refresh_aqi',
-                            mini: true,
-                            backgroundColor: Colors.green.shade800,
-                            tooltip: 'รีเฟรช AQI ทันที',
-                            onPressed: () async {
-                              _showRefreshingDialog();
-                              await aqiProvider.fetchAllProvincesAQI();
-
+                  ),
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Column(
+                      children: [
+                        _buildFAB(
+                          icon: Icons.refresh,
+                          tooltip: 'รีเฟรช AQI ทันที',
+                          color: Color(0xFF5BACC3),
+                          onTap: () async {
+                            _showRefreshingDialog();
+                            await aqiProvider.fetchAllProvincesAQI();
+                            if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('อัปเดตข้อมูล AQI แล้ว'),
-                                  duration: Duration(seconds: 3),
                                 ),
                               );
-                            },
-                            child: const Icon(Icons.refresh),
-                          ),
-                          const SizedBox(height: 8),
-                          FloatingActionButton(
-                            heroTag: 'info_aqi',
-                            mini: true,
-                            backgroundColor: Colors.blueGrey,
-                            tooltip: 'ข้อมูลการอัปเดต AQI',
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (_) => AlertDialog(
-                                  title: const Text('การอัปเดต AQI'),
-                                  content: const Text(
-                                    'แอปจะอัปเดตค่า AQI อัตโนมัติทุก 5 นาที\n'
-                                    '(AQI คือ Air Quality Index หรือดัชนีคุณภาพอากาศ)\n'
-                                    'หากคุณต้องการข้อมูลล่าสุดทันที\n'
-                                    'สามารถกดปุ่มรีเฟรชได้เลยครับ 😊',
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        _buildFAB(
+                          icon: Icons.info_outline,
+                          tooltip: 'ข้อมูลการอัปเดต AQI',
+                          color: Colors.blueGrey,
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('การอัปเดต AQI'),
+                                content: const Text(
+                                  'แอปจะอัปเดตค่า AQI อัตโนมัติทุก 5 นาที\n\n'
+                                  'AQI (Air Quality Index) คือดัชนีคุณภาพอากาศ\n'
+                                  'สามารถกดปุ่มรีเฟรชเพื่ออัปเดตได้ทันทีครับ 😊',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    child: const Text('ปิด'),
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('ปิด'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            child: const Icon(Icons.info_outline),
-                          ),
-                        ],
-                      ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Container(
-                color: Colors.black,
-                padding: const EdgeInsets.all(16),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Container(
+                width: double.infinity,
+                color: theme.cardColor,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'จังหวัด: ${aqiProvider.selectedProvince}',
-                      style: const TextStyle(color: Colors.white, fontSize: 20),
+                      style: theme.textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      selectedAQI != null
-                          ? 'AQI: $selectedAQI'
-                          : 'กำลังโหลดค่า AQI...',
-                      style: TextStyle(
-                        color: selectedAQI != null
-                            ? getAQIColor(selectedAQI)
-                            : Colors.white54,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 500),
+                      child: Text(
+                        selectedAQI != null
+                            ? 'AQI: $selectedAQI'
+                            : 'กำลังโหลดค่า AQI...',
+                        key: ValueKey(selectedAQI),
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: selectedAQI != null
+                              ? getAQIColor(selectedAQI)
+                              : Colors.grey,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       selectedAQI != null ? getAQIAdvice(selectedAQI) : '',
-                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      style: theme.textTheme.bodyMedium,
                     ),
                   ],
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFAB({
+    required IconData icon,
+    required String tooltip,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return FloatingActionButton(
+      heroTag: tooltip,
+      mini: true,
+      backgroundColor: color,
+      tooltip: tooltip,
+      onPressed: onTap,
+      child: Icon(icon),
+    );
+  }
+
+  Widget _buildZoomButton(IconData icon, VoidCallback onPressed) {
+    return FloatingActionButton(
+      heroTag: icon.toString(),
+      mini: true,
+      backgroundColor: Theme.of(context).colorScheme.primary,
+      onPressed: onPressed,
+      child: Icon(icon),
     );
   }
 }

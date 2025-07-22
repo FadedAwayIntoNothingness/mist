@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'splash_screen.dart';
 
+
 class InitializeScreen extends StatefulWidget {
   const InitializeScreen({super.key});
 

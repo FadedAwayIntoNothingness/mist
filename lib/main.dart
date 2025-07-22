@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'providers/aqi_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/initialize_screen.dart';
 import 'services/aqi_service.dart';
 
@@ -29,9 +30,15 @@ void main() async {
   aqiNotifier.startPeriodicCheck();
   print('✅ AQI check started');
 
-  runApp(MISTApp(
-    aqiNotifier: aqiNotifier,
-  ));
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AQIProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: MISTApp(aqiNotifier: aqiNotifier),
+    ),
+  );
 }
 
 Future<void> _requestPermissions() async {
@@ -69,8 +76,10 @@ Future<void> _requestPermissions() async {
 Future<void> _initNotifications() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
+
   const InitializationSettings initializationSettings =
       InitializationSettings(android: initializationSettingsAndroid);
+
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 }
 
@@ -86,6 +95,7 @@ Future<void> _showNotification(String title, String body) async {
   );
   const NotificationDetails platformChannelSpecifics =
       NotificationDetails(android: androidPlatformChannelSpecifics);
+
   await flutterLocalNotificationsPlugin.show(
     1,
     title,
@@ -112,14 +122,34 @@ class _MISTAppState extends State<MISTApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<AQIProvider>(
-      create: (_) => AQIProvider(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'MIST AQI',
-        theme: ThemeData.dark(),
-        home: const InitializeScreen(),
-      ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'MIST AQI',
+          themeMode: themeProvider.themeMode,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            primarySwatch: Colors.blue,
+            scaffoldBackgroundColor: Colors.grey[100],
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          darkTheme: ThemeData.dark().copyWith(
+            scaffoldBackgroundColor: Colors.black,
+            floatingActionButtonTheme: const FloatingActionButtonThemeData(
+              backgroundColor: Colors.deepPurple,
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+            ),
+          ),
+          home: const InitializeScreen(),
+        );
+      },
     );
   }
 }

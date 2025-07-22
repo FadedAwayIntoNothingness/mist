@@ -6,8 +6,8 @@ const TextStyle mistWhiteTextStyle = TextStyle(color: Colors.white);
 
 Color getAQIColor(int aqi) {
   if (aqi <= 50) return Colors.greenAccent;
-  if (aqi <= 100) return Colors.yellowAccent;
-  if (aqi <= 150) return Colors.orangeAccent;
+  if (aqi <= 100) return const Color(0xFFFFB823);
+  if (aqi <= 150) return const Color.fromARGB(255, 172, 97, 1);
   if (aqi <= 200) return Colors.redAccent;
   return Colors.purpleAccent;
 }
