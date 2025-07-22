@@ -6,7 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'providers/aqi_provider.dart';
-import 'screens/splash_screen.dart';
+import 'screens/initialize_screen.dart';
 import 'services/aqi_service.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -118,7 +118,7 @@ class _MISTAppState extends State<MISTApp> {
         debugShowCheckedModeBanner: false,
         title: 'MIST AQI',
         theme: ThemeData.dark(),
-        home: const SplashScreen(),
+        home: const InitializeScreen(),
       ),
     );
   }

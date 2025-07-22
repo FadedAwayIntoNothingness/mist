@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
+import 'dart:math';
 import '../providers/aqi_provider.dart';
 import 'home_screen.dart';
-import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,11 +13,7 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
+class _SplashScreenState extends State<SplashScreen> {
   final List<String> loadingMessages = [
     "Fetching Air Quality...",
     "Checking Weather...",
@@ -40,35 +37,54 @@ class _SplashScreenState extends State<SplashScreen>
   String currentMessage = "Loading...";
   bool isMinigameOpen = false;
   bool isLoadingDone = false;
+  double _progress = 0.0;
+  Timer? _progressTimer;
+  Timer? _postLoadProgressTimer;
 
   @override
   void initState() {
     super.initState();
-    _startAnimation();
+    _startProgressTimer();
     _startLoadingMessages();
     _loadDataAndMaybeNavigate();
   }
 
-  void _startAnimation() {
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 3500),
-      vsync: this,
-    )..forward();
+  void _startProgressTimer() {
+    const tick = Duration(milliseconds: 80);
+    const maxBeforeAPI = 0.85;
 
-    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOutCubic,
-    ));
+    _progressTimer = Timer.periodic(tick, (timer) {
+      if (_progress < maxBeforeAPI) {
+        setState(() {
+          _progress += 0.01;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _startPostLoadProgress() {
+    const tick = Duration(milliseconds: 50);
+    _postLoadProgressTimer = Timer.periodic(tick, (timer) {
+      if (_progress < 1.0) {
+        setState(() {
+          _progress += 0.005 + Random().nextDouble() * 0.002;
+          if (_progress > 1.0) _progress = 1.0;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   void _startLoadingMessages() {
-    final random = Random();;
+    final random = Random();
     Timer.periodic(const Duration(seconds: 3), (timer) {
       if (isLoadingDone) {
         timer.cancel();
         return;
       }
-
       setState(() {
         currentMessage = loadingMessages[random.nextInt(loadingMessages.length)];
       });
@@ -84,14 +100,20 @@ class _SplashScreenState extends State<SplashScreen>
       debugPrint('❌ Error loading AQI data: $e');
     }
 
-    await Future.delayed(const Duration(seconds: 10));
+    if (!mounted) return;
+
+    setState(() {
+      isLoadingDone = true;
+    });
+
+    _startPostLoadProgress();
+
+    await Future.delayed(const Duration(milliseconds: 1000));
 
     if (!mounted) return;
 
     if (isMinigameOpen) {
-      setState(() {
-        isLoadingDone = true;
-      });
+
     } else {
       _goToHome();
     }
@@ -129,7 +151,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _controller.dispose();
+    _progressTimer?.cancel();
+    _postLoadProgressTimer?.cancel();
     super.dispose();
   }
 
@@ -160,24 +183,31 @@ class _SplashScreenState extends State<SplashScreen>
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       height: 10,
-                      color: Colors.white24,
-                      child: AnimatedBuilder(
-                        animation: _animation,
-                        builder: (context, child) {
-                          return FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: _animation.value.clamp(0.01, 1.0),
-                            child: Container(
-                              constraints: const BoxConstraints(minWidth: 1),
-                              height: 10,
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [Colors.blueAccent, Colors.cyan],
-                                ),
+                      color: Colors.transparent,
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.white12,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: MediaQuery.of(context).size.width * _progress.clamp(0.0, 1.0) * 0.6,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color(0xFF7F7FD5), 
+                                  Color(0xFF86A8E7), 
+                                  Color(0xFF91EAE4), 
+                                ],
                               ),
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -188,14 +218,13 @@ class _SplashScreenState extends State<SplashScreen>
                   icon: const Icon(Icons.videogame_asset),
                   label: const Text("Play Minigame"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.cyan,
+                    backgroundColor: Color(0xFF005AA7),
                     foregroundColor: Colors.black,
                   ),
                 ),
               ],
             ),
           ),
-
           if (isLoadingDone && isMinigameOpen)
             const Positioned(
               bottom: 40,
@@ -215,11 +244,14 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// --------------------- MINIGAME WIDGET ------------------------
+// --------------------------------------------------
+//                    MINIGAME
+// --------------------------------------------------
 
 class _ColorPopGame extends StatefulWidget {
   final VoidCallback onExit;
   final bool isLoadingDone;
+
   const _ColorPopGame({
     required this.onExit,
     required this.isLoadingDone,
@@ -235,6 +267,7 @@ class _ColorPopGameState extends State<_ColorPopGame> {
   int score = 0;
   Timer? gameTimer;
   int? wrongTappedIndex;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -245,16 +278,13 @@ class _ColorPopGameState extends State<_ColorPopGame> {
     });
   }
 
-  void _shuffleTarget() {
-    setState(() {
-      final indices = List.generate(gridSize * gridSize, (i) => i)..shuffle();
-      targetIndex = indices.first;
-      wrongTappedIndex = null;
-    });
+  Future<void> _playSuccessSound() async {
+    await _audioPlayer.play(AssetSource('minigamesfx.mp3'));
   }
 
-  void _handleTap(int index) {
+  Future<void> _handleTap(int index) async {
     if (index == targetIndex) {
+      await _playSuccessSound();
       setState(() {
         score++;
         wrongTappedIndex = null;
@@ -264,7 +294,6 @@ class _ColorPopGameState extends State<_ColorPopGame> {
         score = (score > 0) ? score - 1 : 0;
         wrongTappedIndex = index;
       });
-
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           setState(() => wrongTappedIndex = null);
@@ -274,16 +303,25 @@ class _ColorPopGameState extends State<_ColorPopGame> {
     _shuffleTarget();
   }
 
+  void _shuffleTarget() {
+    setState(() {
+      final indices = List.generate(gridSize * gridSize, (i) => i)..shuffle();
+      targetIndex = indices.first;
+      wrongTappedIndex = null;
+    });
+  }
+
   @override
   void dispose() {
     gameTimer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Colors.black.withOpacity(0.85),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -291,11 +329,11 @@ class _ColorPopGameState extends State<_ColorPopGame> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              "🎯 Color Pop",
+              "🌫️ Clear the Mist",
               style: TextStyle(fontSize: 20, color: Colors.white),
             ),
             const SizedBox(height: 12),
-            Text("Score: $score", style: const TextStyle(fontSize: 16, color: Colors.white70)),
+            Text("Purified: $score", style: const TextStyle(fontSize: 16, color: Colors.white70)),
             const SizedBox(height: 16),
             SizedBox(
               height: 240,
@@ -319,14 +357,23 @@ class _ColorPopGameState extends State<_ColorPopGame> {
                       duration: const Duration(milliseconds: 300),
                       decoration: BoxDecoration(
                         color: isWrong
-                            ? Colors.red
+                            ? Colors.red.withOpacity(0.7)
                             : isTarget
-                                ? Colors.blue
+                                ? Colors.grey.shade300
                                 : Colors.grey.shade800,
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: isTarget
+                            ? [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.5),
+                                  blurRadius: 8,
+                                  spreadRadius: 2,
+                                )
+                              ]
+                            : null,
                         border: Border.all(
                           color: isTarget
-                              ? Colors.cyanAccent
+                              ? Colors.lightBlueAccent
                               : isWrong
                                   ? Colors.redAccent
                                   : Colors.white24,
@@ -341,14 +388,14 @@ class _ColorPopGameState extends State<_ColorPopGame> {
             const SizedBox(height: 16),
             if (widget.isLoadingDone)
               const Text(
-                "✅ Data loaded! You can exit now.",
+                "✅ Air data is ready! You may exit anytime.",
                 style: TextStyle(color: Colors.greenAccent),
                 textAlign: TextAlign.center,
               ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: widget.onExit,
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.cyan),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.lightBlueAccent),
               child: const Text("Exit Game", style: TextStyle(color: Colors.black)),
             ),
           ],

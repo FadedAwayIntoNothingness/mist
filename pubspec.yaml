@@ -20,6 +20,7 @@ dependencies:
   flutter_map: ^8.1.1
   geolocator: ^10.0.0
   permission_handler: ^11.3.0
+  audioplayers: ^6.5.0
 
   cupertino_icons: ^1.0.8
 
@@ -44,4 +45,6 @@ flutter_local_notifications:
 flutter:
   assets:
     - assets/loading.gif
+    - assets/minigamesfx.mp3
+    - assets/initialize.gif
   uses-material-design: true
