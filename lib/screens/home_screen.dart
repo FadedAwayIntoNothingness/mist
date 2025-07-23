@@ -77,13 +77,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAQIContent(ThemeData theme) {
     return Consumer<AQIProvider>(
       builder: (context, aqiProvider, child) {
-        LatLng center = provinceCoordinates[aqiProvider.selectedProvince] ?? LatLng(13.7563, 100.5018);
+        final center = provinceCoordinates[aqiProvider.selectedProvince] ?? const LatLng(13.7563, 100.5018);
         final selectedAQI = aqiProvider.provinceAQIs[aqiProvider.selectedProvince];
 
         return Stack(
           children: [
             Column(
               children: [
+                // จังหวัด Dropdown
                 Card(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   elevation: 4,
@@ -102,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (value != null) {
                           aqiProvider.selectedProvince = value;
                           setState(() {
-                            final newCenter = provinceCoordinates[value] ?? LatLng(13.7563, 100.5018);
+                            final newCenter = provinceCoordinates[value] ?? const LatLng(13.7563, 100.5018);
                             mapController.move(newCenter, 7);
                           });
                         }
@@ -110,6 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+
+                // แผนที่
                 Expanded(
                   child: Stack(
                     children: [
@@ -123,27 +126,41 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         children: [
                           TileLayer(
-                            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            subdomains: ['a', 'b', 'c'],
+                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            tileProvider: NetworkTileProvider(
+                              headers: {
+                                'User-Agent': 'FlutterAQIApp/1.0 (viktor.pongpisut@gmail.com)',
+                              },
+                            ),
                           ),
                           MarkerLayer(markers: aqiProvider.aqiMarkers),
                         ],
                       ),
+
+                      // ปุ่ม Zoom
                       Positioned(
                         bottom: 16,
                         right: 16,
                         child: Column(
                           children: [
                             _buildZoomButton(Icons.zoom_in, () {
-                              mapController.move(mapController.camera.center, mapController.camera.zoom + 1);
+                              mapController.move(
+                                mapController.camera.center,
+                                mapController.camera.zoom + 1,
+                              );
                             }),
                             const SizedBox(height: 8),
                             _buildZoomButton(Icons.zoom_out, () {
-                              mapController.move(mapController.camera.center, mapController.camera.zoom - 1);
+                              mapController.move(
+                                mapController.camera.center,
+                                mapController.camera.zoom - 1,
+                              );
                             }),
                           ],
                         ),
                       ),
+
+                      // ปุ่ม FAB ขวาบน
                       Positioned(
                         top: 16,
                         right: 16,
@@ -194,6 +211,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+
+                // แสดง AQI ด้านล่าง
                 Container(
                   width: double.infinity,
                   color: theme.cardColor,
@@ -201,7 +220,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('จังหวัด: ${aqiProvider.selectedProvince}', style: theme.textTheme.titleLarge),
+                      Text(
+                        'จังหวัด: ${aqiProvider.selectedProvince}',
+                        style: theme.textTheme.titleLarge,
+                      ),
                       const SizedBox(height: 8),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 500),
@@ -266,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           showDialog(
             context: context,
-            builder: (_) => BellionChatDialog(),
+            builder: (_) => const BellionChatDialog(),
           );
         },
         child: CircleAvatar(
