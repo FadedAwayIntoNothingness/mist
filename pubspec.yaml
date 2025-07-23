@@ -46,6 +46,7 @@ flutter_local_notifications:
 flutter:
   assets:
     - assets/loading.gif
-    - assets/minigamesfx.mp3
+    - assets/sfx/minigamesfx.mp3
     - assets/initialize.gif
+    - assets/Portrait/aipfp.png
   uses-material-design: true
