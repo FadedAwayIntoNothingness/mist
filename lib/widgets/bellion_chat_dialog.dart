@@ -121,7 +121,7 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 1, 117, 5),
+                              color: const Color.fromARGB(255, 2, 27, 138),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: AnimatedBuilder(
@@ -161,7 +161,7 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                             decoration: BoxDecoration(
                               color: isMe
                                   ? const Color.fromARGB(255, 70, 74, 78)
-                                  : const Color.fromARGB(255, 1, 117, 5),
+                                  : const Color.fromARGB(255, 2, 27, 138),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -177,7 +177,6 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
               ),
             ),
 
-            // กล่องคำถาม "ทำไม Bellion ถึงตอบช้า?"
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: GestureDetector(
@@ -212,7 +211,7 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 24, 24, 24),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green, width: 1),
+                    border: Border.all(color: const Color.fromARGB(255, 1, 20, 112), width: 1),
                   ),
                   child: const Text(
                     'ทำไม Bellion ถึงตอบช้า?',
