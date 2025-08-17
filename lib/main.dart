@@ -17,22 +17,32 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await _requestPermissions();
-  print('✅ Permissions requested');
+  if (kDebugMode) {
+    print('✅ Permissions requested');
+  }
 
   await _initNotifications();
-  print('✅ Notifications initialized');
+  if (kDebugMode) {
+    print('✅ Notifications initialized');
+  }
 
   await _showNotification('MIST', 'Welcome to MIST AQI!');
-  print('✅ Welcome notification shown');
+  if (kDebugMode) {
+    print('✅ Welcome notification shown');
+  }
 
   Position? userPosition;
   try {
     userPosition = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
-    print('📍 Got user location: ${userPosition.latitude}, ${userPosition.longitude}');
+    if (kDebugMode) {
+      print('📍 Got user location: ${userPosition.latitude}, ${userPosition.longitude}');
+    }
   } catch (e) {
-    print('❌ Failed to get user location: $e');
+    if (kDebugMode) {
+      print('❌ Failed to get user location: $e');
+    }
   }
 
   final aqiNotifier = AqiNotifier(flutterLocalNotificationsPlugin);
@@ -43,9 +53,13 @@ void main() async {
       lat: userPosition.latitude,
       lon: userPosition.longitude,
     );
-    print('✅ AQI check started with user location');
+    if (kDebugMode) {
+      print('✅ AQI check started with user location');
+    }
   } else {
-    print('⚠️ AQI check skipped: no location available');
+    if (kDebugMode) {
+      print('⚠️ AQI check skipped: no location available');
+    }
   }
 
   runApp(
@@ -68,12 +82,18 @@ Future<void> _requestPermissions() async {
     }
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      print('❌ Location permission denied');
+      if (kDebugMode) {
+        print('❌ Location permission denied');
+      }
     } else {
-      print('✅ Location permission granted');
+      if (kDebugMode) {
+        print('✅ Location permission granted');
+      }
     }
   } else {
-    print('🌐 Web: location permission handled by browser');
+    if (kDebugMode) {
+      print('🌐 Web: location permission handled by browser');
+    }
   }
 
   if (Platform.isIOS) {
@@ -85,9 +105,13 @@ Future<void> _requestPermissions() async {
       badge: true,
       sound: true,
     );
-    print('📱 iOS notification permission requested');
+    if (kDebugMode) {
+      print('📱 iOS notification permission requested');
+    }
   } else {
-    print('ℹ️ Notification permission on Android/Web handled by OS/browser');
+    if (kDebugMode) {
+      print('ℹ️ Notification permission on Android/Web handled by OS/browser');
+    }
   }
 }
 
@@ -125,7 +149,7 @@ Future<void> _showNotification(String title, String body) async {
 class MISTApp extends StatefulWidget {
   final AqiNotifier? aqiNotifier;
 
-  const MISTApp({Key? key, this.aqiNotifier}) : super(key: key);
+  const MISTApp({super.key, this.aqiNotifier});
 
   @override
   State<MISTApp> createState() => _MISTAppState();
