@@ -34,75 +34,76 @@ class _HomepageWidgetState extends State<HomepageWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   late final MapController mapController;
-  final latlong.LatLng center = latlong.LatLng(13.736717, 100.523186); // Example: Bangkok
+  final latlong.LatLng center =
+      latlong.LatLng(13.736717, 100.523186); // Example: Bangkok
   late AQIProvider aqiProvider;
 
-@override
-void initState() {
-  super.initState();
-  _model = createModel(context, () => HomepageModel());
-  mapController = MapController();
-  aqiProvider = Provider.of<AQIProvider>(context, listen: false);
+  @override
+  void initState() {
+    super.initState();
+    _model = createModel(context, () => HomepageModel());
+    mapController = MapController();
+    aqiProvider = Provider.of<AQIProvider>(context, listen: false);
 
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    await _model.fetchAQIForProvince('Bangkok');
-    setState(() {}); // Update UI after fetching
-    await _askLocationPermission();
-  });
-}
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _model.fetchAQIForProvince('Bangkok');
+      setState(() {}); // Update UI after fetching
+      await _askLocationPermission();
+    });
+  }
 
   Future<void> _askLocationPermission() async {
-  var status = await Permission.location.status;
-  if (status.isGranted || status.isPermanentlyDenied) {
-    // Already handled, do nothing
-    return;
+    var status = await Permission.location.status;
+    if (status.isGranted || status.isPermanentlyDenied) {
+      // Already handled, do nothing
+      return;
+    }
+    var result = await Permission.location.request();
+    if (result.isGranted) {
+      print('✅ Location permission granted');
+    } else {
+      print('❌ Location permission denied');
+      // Optionally show a dialog to explain why you need location
+    }
   }
-  var result = await Permission.location.request();
-  if (result.isGranted) {
-    print('✅ Location permission granted');
-  } else {
-    print('❌ Location permission denied');
-    // Optionally show a dialog to explain why you need location
+
+  Widget _buildZoomButton(IconData icon, VoidCallback onTap) {
+    return FloatingActionButton(
+      mini: true,
+      onPressed: onTap,
+      child: Icon(icon),
+    );
   }
-}
 
-Widget _buildZoomButton(IconData icon, VoidCallback onTap) {
-  return FloatingActionButton(
-    mini: true,
-    onPressed: onTap,
-    child: Icon(icon),
-  );
-}
+  Widget _buildFAB({
+    required IconData icon,
+    required String tooltip,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return FloatingActionButton(
+      heroTag: tooltip,
+      backgroundColor: color,
+      onPressed: onTap,
+      child: Icon(icon),
+      tooltip: tooltip,
+    );
+  }
 
-Widget _buildFAB({
-  required IconData icon,
-  required String tooltip,
-  required Color color,
-  required VoidCallback onTap,
-}) {
-  return FloatingActionButton(
-    heroTag: tooltip,
-    backgroundColor: color,
-    onPressed: onTap,
-    child: Icon(icon),
-    tooltip: tooltip,
-  );
-}
-
-void _showRefreshingDialog() {
-  showDialog(
-    context: context,
-    builder: (_) => const AlertDialog(
-      content: Row(
-        children: [
-          CircularProgressIndicator(),
-          SizedBox(width: 16),
-          Text('Refreshing AQI...'),
-        ],
+  void _showRefreshingDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => const AlertDialog(
+        content: Row(
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('Refreshing AQI...'),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   void dispose() {
@@ -113,154 +114,148 @@ void _showRefreshingDialog() {
 
   @override
   Widget build(BuildContext context) {
-     final aqiProvider = Provider.of<AQIProvider>(context);
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+    return SafeArea(
       child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         body: Container(
           width: double.infinity,
           height: double.infinity,
           child: Stack(
             children: [
-              // ...existing code...
-
-            Align(
-              alignment: AlignmentDirectional(0.0, 0.0),
-              child: Stack(
-                children: [
-                  FlutterMap(
-                    mapController: mapController,
-                    options: MapOptions(
-                      initialCenter: center,
-                      initialZoom: 7,
-                      minZoom: 5,
-                      maxZoom: 13,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        tileProvider: NetworkTileProvider(
-                          headers: {
-                            'User-Agent': 'FlutterAQIApp/1.0 (viktor.pongpisut@gmail.com)',
-                          },
-                        ),
+              Align(
+                alignment: AlignmentDirectional(0.0, 0.0),
+                child: Stack(
+                  children: [
+                    FlutterMap(
+                      mapController: mapController,
+                      options: MapOptions(
+                        initialCenter: center,
+                        initialZoom: 7,
+                        minZoom: 5,
+                        maxZoom: 13,
                       ),
-                      MarkerLayer(markers: aqiProvider.aqiMarkers),
-                    ],
-                  ),
-
-                  // Zoom buttons
-                  Positioned(
-                    bottom: 365,
-                    right: 16,
-                    child: Column(
                       children: [
-                        _buildZoomButton(Icons.zoom_in, () {
-                          mapController.move(
-                            mapController.camera.center,
-                            mapController.camera.zoom + 1,
-                          );
-                        }),
-                        const SizedBox(height: 8),
-                        _buildZoomButton(Icons.zoom_out, () {
-                          mapController.move(
-                            mapController.camera.center,
-                            mapController.camera.zoom - 1,
-                          );
-                        }),
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          tileProvider: NetworkTileProvider(
+                            headers: {
+                              'User-Agent':
+                                  'FlutterAQIApp/1.0 (viktor.pongpisut@gmail.com)',
+                            },
+                          ),
+                        ),
+                        MarkerLayer(markers: aqiProvider.aqiMarkers),
                       ],
                     ),
-                  ),
-                  
-                  // Bellion chat head (below the zoom buttons)
-                  Positioned(
-                    bottom: 305, // Adjust this value to place it under the zoom buttons
-                    right: 16,
-                    child: GestureDetector(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => FractionallySizedBox(
-                            heightFactor: 0.95,
-                            child: BellionChatDialog(),
-                          ),
-                        );
-                      },
-                      child: CircleAvatar(
-                        radius: 28,
-                        backgroundColor: Colors.greenAccent,
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/aipfp.png',
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
 
-                  // FABs
-                  Positioned(
-                    top: 100,
-                    right: 16,
-                    child: Column(
-                      children: [
-                        _buildFAB(
-                          icon: Icons.refresh,
-                          tooltip: 'refresh AQI',
-                          color: const Color(0xFF5BACC3),
-                          onTap: () async {
-                            _showRefreshingDialog();
-                            await aqiProvider.fetchAllProvincesAQI();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('AQI data updated')),
-                              );
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        _buildFAB(
-                          icon: Icons.info_outline,
-                          tooltip: 'AQI Data',
-                          color: Colors.blueGrey,
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                                title: const Text('AQI Update'),
-                                content: const Text(
-                                  'The app will automatically update the AQI value every 5 minutes\n\n'
-                                  'AQI (Air Quality Index) is an indicator of air quality\n'
-                                  'You can also press the refresh button to update immediately 😊',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: const Text('Close'),
-                                  ),
-                                ],
-                              ),
+                    // Zoom buttons
+                    Positioned(
+                      bottom: 365,
+                      right: 16,
+                      child: Column(
+                        children: [
+                          _buildZoomButton(Icons.zoom_in, () {
+                            mapController.move(
+                              mapController.camera.center,
+                              mapController.camera.zoom + 1,
                             );
-                          },
-                        ),
-                      ],
+                          }),
+                          const SizedBox(height: 8),
+                          _buildZoomButton(Icons.zoom_out, () {
+                            mapController.move(
+                              mapController.camera.center,
+                              mapController.camera.zoom - 1,
+                            );
+                          }),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Bellion chat head (below the zoom buttons)
+                    Positioned(
+                      bottom:
+                          305, // Adjust this value to place it under the zoom buttons
+                      right: 16,
+                      child: GestureDetector(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => FractionallySizedBox(
+                              heightFactor: 0.95,
+                              child: BellionChatDialog(),
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
+                          radius: 28,
+                          backgroundColor: Colors.greenAccent,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/aipfp.png',
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // FABs
+                    Positioned(
+                      top: 100,
+                      right: 16,
+                      child: Column(
+                        children: [
+                          _buildFAB(
+                            icon: Icons.refresh,
+                            tooltip: 'refresh AQI',
+                            color: const Color(0xFF5BACC3),
+                            onTap: () async {
+                              _showRefreshingDialog();
+                              await aqiProvider.fetchAllProvincesAQI();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('AQI data updated')),
+                                );
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          _buildFAB(
+                            icon: Icons.info_outline,
+                            tooltip: 'AQI Data',
+                            color: Colors.blueGrey,
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: const Text('AQI Update'),
+                                  content: const Text(
+                                    'The app will automatically update the AQI value every 5 minutes\n\n'
+                                    'AQI (Air Quality Index) is an indicator of air quality\n'
+                                    'You can also press the refresh button to update immediately 😊',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text('Close'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-
-
               Align(
                 alignment: AlignmentDirectional(0.0, 0.0),
                 child: Column(
@@ -296,9 +291,9 @@ void _showRefreshingDialog() {
                                     _model.dropDownValue ??= 'Bangkok',
                                   ),
                                   options: thaiProvinces,
-
                                   onChanged: (val) async {
-                                    safeSetState(() => _model.dropDownValue = val);
+                                    safeSetState(
+                                        () => _model.dropDownValue = val);
                                     await _model.fetchAQIForProvince(val!);
                                   },
                                   width: 300.0,
@@ -347,7 +342,6 @@ void _showRefreshingDialog() {
                         ),
                       ),
                     ),
-                    
                     Padding(
                       padding: EdgeInsetsDirectional.fromSTEB(
                           24.0, 24.0, 24.0, 90.0),
@@ -385,7 +379,7 @@ void _showRefreshingDialog() {
                                     size: 24.0,
                                   ),
                                   Text(
-                                     _model.dropDownValue ?? 'Bangkok',
+                                    _model.dropDownValue ?? 'Bangkok',
                                     style: FlutterFlowTheme.of(context)
                                         .titleLarge
                                         .override(
@@ -478,7 +472,6 @@ void _showRefreshingDialog() {
                                   ),
                                 ),
                               ),
-
                               Column(
                                 mainAxisSize: MainAxisSize.max,
                                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -492,17 +485,18 @@ void _showRefreshingDialog() {
                                           .override(
                                             font: GoogleFonts.interTight(
                                               fontWeight: FontWeight.w400,
-                                              fontStyle: FlutterFlowTheme.of(context)
-                                                  .bodySmall
-                                                  .fontStyle,
+                                              fontStyle:
+                                                  FlutterFlowTheme.of(context)
+                                                      .bodySmall
+                                                      .fontStyle,
                                             ),
-                                            color: const Color.fromARGB(255, 145, 143, 143),
+                                            color: const Color.fromARGB(
+                                                255, 145, 143, 143),
                                             fontSize: 15.0, // Smaller font size
                                             letterSpacing: 0.0,
                                           ),
                                     ),
                                   ),
-
                                 ].divide(SizedBox(height: 8.0)),
                               ),
                             ].divide(SizedBox(height: 16.0)),

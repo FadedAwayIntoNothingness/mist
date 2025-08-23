@@ -34,14 +34,16 @@ class _InitializeScreenState extends State<InitializeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Center(
-        child: AnimatedOpacity(
-          opacity: _opacity,
-          duration: const Duration(milliseconds: 500),
-          child: Image.asset(
-            'assets/initialize.gif',
-            width: 200,
-            height: 200,
+      body: SafeArea(
+        child: Center(
+          child: AnimatedOpacity(
+            opacity: _opacity,
+            duration: const Duration(milliseconds: 500),
+            child: Image.asset(
+              'assets/initialize.gif',
+              width: 200,
+              height: 200,
+            ),
           ),
         ),
       ),

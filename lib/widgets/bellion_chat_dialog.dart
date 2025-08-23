@@ -56,7 +56,7 @@ class _BellionChatDialogState extends State<BellionChatDialog>
               'session_id': 'session_01',
             }),
           )
-          .timeout(const Duration(seconds: 60));
+          .timeout(const Duration(seconds: 90));
 
       if (response.statusCode == 200) {
         final reply = jsonDecode(response.body)['reply'] ?? '…';

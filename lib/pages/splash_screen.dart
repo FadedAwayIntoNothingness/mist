@@ -90,7 +90,8 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
       setState(() {
-        currentMessage = loadingMessages[random.nextInt(loadingMessages.length)];
+        currentMessage =
+            loadingMessages[random.nextInt(loadingMessages.length)];
       });
     });
   }
@@ -122,8 +123,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _goToHome() {
-  context.go('/HomepageWidget');
-}
+    context.go('/HomepageWidget');
+  }
 
   void _openMinigame() {
     setState(() {
@@ -135,7 +136,8 @@ class _SplashScreenState extends State<SplashScreen> {
       barrierDismissible: false,
       builder: (_) => selectedGame == 0
           ? ColorPopGame(onExit: _closeMinigame, isLoadingDone: isLoadingDone)
-          : BlockBlastGame(onExit: _closeMinigame, isLoadingDone: isLoadingDone),
+          : BlockBlastGame(
+              onExit: _closeMinigame, isLoadingDone: isLoadingDone),
     );
   }
 
@@ -156,93 +158,103 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('assets/loading.gif', width: 160, height: 160),
-                const SizedBox(height: 20),
-                Text(currentMessage, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-                const SizedBox(height: 30),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 60),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      height: 10,
-                      color: Colors.transparent,
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Colors.white12,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: MediaQuery.of(context).size.width * _progress.clamp(0.0, 1.0) * 0.6,
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Color(0xFF7F7FD5),
-                                  Color(0xFF86A8E7),
-                                  Color(0xFF91EAE4),
-                                ],
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/loading.gif', width: 160, height: 160),
+                  const SizedBox(height: 20),
+                  Text(currentMessage,
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 16)),
+                  const SizedBox(height: 30),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 60),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        height: 10,
+                        color: Colors.transparent,
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: Colors.white12,
+                                borderRadius: BorderRadius.circular(20),
                               ),
                             ),
-                          ),
-                        ],
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: MediaQuery.of(context).size.width *
+                                  _progress.clamp(0.0, 1.0) *
+                                  0.6,
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Color(0xFF7F7FD5),
+                                    Color(0xFF86A8E7),
+                                    Color(0xFF91EAE4),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 30),
-                ToggleButtons(
-                  isSelected: [selectedGame == 0, selectedGame == 1],
-                  onPressed: (index) => setState(() => selectedGame = index),
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.white,
-                  selectedColor: Colors.black,
-                  fillColor: Colors.greenAccent,
-                  children: const [
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text("Mist Pop")),
-                    Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text("Mist Blast")),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: _openMinigame,
-                  icon: const Icon(Icons.videogame_asset),
-                  label: const Text("Play Minigame"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF8CE1DC),
-                    foregroundColor: Colors.black,
+                  const SizedBox(height: 30),
+                  ToggleButtons(
+                    isSelected: [selectedGame == 0, selectedGame == 1],
+                    onPressed: (index) => setState(() => selectedGame = index),
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                    selectedColor: Colors.black,
+                    fillColor: Colors.greenAccent,
+                    children: const [
+                      Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text("Mist Pop")),
+                      Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: Text("Mist Blast")),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          if (isLoadingDone && isMinigameOpen)
-            const Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Text(
-                  "✅ Data loaded! Close the minigame to continue.",
-                  style: TextStyle(color: Colors.greenAccent),
-                  textAlign: TextAlign.center,
-                ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: _openMinigame,
+                    icon: const Icon(Icons.videogame_asset),
+                    label: const Text("Play Minigame"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF8CE1DC),
+                      foregroundColor: Colors.black,
+                    ),
+                  ),
+                ],
               ),
             ),
-        ],
+            if (isLoadingDone && isMinigameOpen)
+              const Positioned(
+                bottom: 40,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    "✅ Data loaded! Close the minigame to continue.",
+                    style: TextStyle(color: Colors.greenAccent),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -267,13 +279,33 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
   late List<List<int>> board;
 
   final List<List<List<int>>> predefinedShapes = [
-    [[1, 1, 1]], // I horizontal
-    [[1], [1], [1]], // I vertical
-    [[1, 1], [1, 0]], // L
-    [[1, 1], [0, 1]], // J
-    [[1, 1], [1, 1]], // O
-    [[1, 1, 1], [0, 1, 0]], // T
-    [[1]], // Dot
+    [
+      [1, 1, 1]
+    ], // I horizontal
+    [
+      [1],
+      [1],
+      [1]
+    ], // I vertical
+    [
+      [1, 1],
+      [1, 0]
+    ], // L
+    [
+      [1, 1],
+      [0, 1]
+    ], // J
+    [
+      [1, 1],
+      [1, 1]
+    ], // O
+    [
+      [1, 1, 1],
+      [0, 1, 0]
+    ], // T
+    [
+      [1]
+    ], // Dot
   ];
 
   List<List<List<int>>> currentBlocks = [];
@@ -324,7 +356,9 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
         if (shape[y][x] == 1) {
           int boardX = startX + x;
           int boardY = startY + y;
-          if (boardX >= gridSize || boardY >= gridSize || board[boardY][boardX] == 1) {
+          if (boardX >= gridSize ||
+              boardY >= gridSize ||
+              board[boardY][boardX] == 1) {
             return false;
           }
         }
@@ -362,7 +396,8 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
     }
 
     for (int x = 0; x < gridSize; x++) {
-      if (List.generate(gridSize, (y) => board[y][x]).every((cell) => cell == 1)) {
+      if (List.generate(gridSize, (y) => board[y][x])
+          .every((cell) => cell == 1)) {
         for (int y = 0; y < gridSize; y++) {
           board[y][x] = 0;
         }
@@ -384,7 +419,8 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
         color: filled
             ? Colors.white.withAlpha((0.9 * 255).round())
             : highlight
-                ? Colors.tealAccent.withAlpha(120) // changed from lightBlueAccent
+                ? Colors.tealAccent
+                    .withAlpha(120) // changed from lightBlueAccent
                 : Colors.blueGrey[800],
         borderRadius: BorderRadius.circular(4),
       ),
@@ -403,7 +439,9 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
               height: size,
               margin: const EdgeInsets.all(1),
               decoration: BoxDecoration(
-                color: cell == 1 ? Colors.tealAccent.shade100 : Colors.transparent, // green
+                color: cell == 1
+                    ? Colors.tealAccent.shade100
+                    : Colors.transparent, // green
                 borderRadius: BorderRadius.circular(4),
               ),
             );
@@ -438,16 +476,19 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("🧱 Block Blast", style: TextStyle(color: Colors.white, fontSize: 20)),
+            const Text("🧱 Block Blast",
+                style: TextStyle(color: Colors.white, fontSize: 20)),
             const SizedBox(height: 10),
-            Text("Score: $score", style: const TextStyle(color: Colors.white70)),
+            Text("Score: $score",
+                style: const TextStyle(color: Colors.white70)),
             const SizedBox(height: 20),
             SizedBox(
               width: 270,
               height: 270,
               child: GridView.builder(
                 itemCount: gridSize * gridSize,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: gridSize),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: gridSize),
                 itemBuilder: (context, index) {
                   final x = index % gridSize;
                   final y = index ~/ gridSize;
@@ -459,7 +500,9 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
                     final shape = hoveredShape!;
                     for (int sy = 0; sy < shape.length; sy++) {
                       for (int sx = 0; sx < shape[0].length; sx++) {
-                        if (shape[sy][sx] == 1 && hx + sx == x && hy + sy == y) {
+                        if (shape[sy][sx] == 1 &&
+                            hx + sx == x &&
+                            hy + sy == y) {
                           highlight = _canPlace(shape, hx, hy);
                         }
                       }
@@ -484,7 +527,8 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
                       _placeShape(details.data, x, y);
                     },
                     builder: (context, candidateData, rejectedData) {
-                      return _buildBlockCell(board[y][x] == 1, highlight: highlight);
+                      return _buildBlockCell(board[y][x] == 1,
+                          highlight: highlight);
                     },
                   );
                 },
@@ -497,12 +541,15 @@ class _BlockBlastGameState extends State<BlockBlastGame> {
             ),
             const SizedBox(height: 20),
             if (widget.isLoadingDone)
-              const Text("✅ Don't rage quit please", style: TextStyle(color: Colors.greenAccent)),
+              const Text("✅ Don't rage quit please",
+                  style: TextStyle(color: Colors.greenAccent)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: widget.onExit,
-              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF8CE1DC)),
-              child: const Text("Exit Game", style: TextStyle(color: Colors.black)),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Color(0xFF8CE1DC)),
+              child: const Text("Exit Game",
+                  style: TextStyle(color: Colors.black)),
             ),
           ],
         ),
@@ -600,7 +647,8 @@ class ColorPopGameState extends State<ColorPopGame> {
               style: TextStyle(fontSize: 20, color: Colors.white),
             ),
             const SizedBox(height: 12),
-            Text("Purified: $score", style: const TextStyle(fontSize: 16, color: Colors.white70)),
+            Text("Purified: $score",
+                style: const TextStyle(fontSize: 16, color: Colors.white70)),
             const SizedBox(height: 16),
             SizedBox(
               height: 240,
@@ -640,7 +688,8 @@ class ColorPopGameState extends State<ColorPopGame> {
                             : null,
                         border: Border.all(
                           color: isTarget
-                              ? Color(0xFF8CE1DC) // changed from lightBlueAccent
+                              ? Color(
+                                  0xFF8CE1DC) // changed from lightBlueAccent
                               : isWrong
                                   ? Colors.redAccent
                                   : Colors.white24,
@@ -662,8 +711,10 @@ class ColorPopGameState extends State<ColorPopGame> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: widget.onExit,
-              style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF8CE1DC)),
-              child: const Text("Exit Game", style: TextStyle(color: Colors.black)),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Color(0xFF8CE1DC)),
+              child: const Text("Exit Game",
+                  style: TextStyle(color: Colors.black)),
             ),
           ],
         ),
