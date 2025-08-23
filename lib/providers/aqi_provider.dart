@@ -11,7 +11,7 @@ class AQIProvider extends ChangeNotifier {
   final AqiService _aqiService = AqiService();
 
   int? currentAQI;
-  String selectedProvince = 'กรุงเทพมหานคร';
+  String selectedProvince = 'Bangkok';
   List<Marker> aqiMarkers = [];
 
   Map<String, int?> provinceAQIs = {};

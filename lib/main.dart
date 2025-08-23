@@ -1,21 +1,24 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
+import '/flutter_flow/flutter_flow_theme.dart';
+import '/flutter_flow/flutter_flow_util.dart';
+import '/flutter_flow/nav/nav.dart';
+import 'index.dart';
+
 import 'package:provider/provider.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:geolocator/geolocator.dart';
+import '/providers/aqi_provider.dart';
+import '/providers/theme_notifier.dart';
 
-import 'providers/aqi_provider.dart';
-import 'providers/theme_provider.dart';
-import 'screens/initialize_screen.dart';
-import 'services/aqi_service.dart';
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoRouter.optionURLReflectsImperativeAPIs = true;
+  usePathUrlStrategy();
 
+<<<<<<< Updated upstream
   await _requestPermissions();
   if (kDebugMode) {
     print('✅ Permissions requested');
@@ -61,18 +64,22 @@ void main() async {
       print('⚠️ AQI check skipped: no location available');
     }
   }
+=======
+  await FlutterFlowTheme.initialize();
+>>>>>>> Stashed changes
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AQIProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeNotifier()),
       ],
-      child: MISTApp(aqiNotifier: aqiNotifier),
+      child: MyApp(),
     ),
   );
 }
 
+<<<<<<< Updated upstream
 Future<void> _requestPermissions() async {
   if (!kIsWeb) {
     LocationPermission permission = await Geolocator.checkPermission();
@@ -150,48 +157,70 @@ class MISTApp extends StatefulWidget {
   final AqiNotifier? aqiNotifier;
 
   const MISTApp({super.key, this.aqiNotifier});
-
+=======
+class MyApp extends StatefulWidget {
   @override
-  State<MISTApp> createState() => _MISTAppState();
+  State<MyApp> createState() => _MyAppState();
+
+  static _MyAppState of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>()!;
 }
 
-class _MISTAppState extends State<MISTApp> {
-  @override
-  void dispose() {
-    widget.aqiNotifier?.dispose();
-    super.dispose();
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = FlutterFlowTheme.themeMode;
+
+  late AppStateNotifier _appStateNotifier;
+  late GoRouter _router;
+
+  String getRoute([dynamic routeMatch]) {
+    // Accepts RouteMatchBase, RouteMatch, or null
+    final lastMatch =
+        routeMatch ?? _router.routerDelegate.currentConfiguration.last;
+    final matchList = lastMatch is ImperativeRouteMatch
+        ? lastMatch.matches
+        : _router.routerDelegate.currentConfiguration;
+    return matchList.uri.toString();
   }
+
+  List<String> getRouteStack() =>
+      _router.routerDelegate.currentConfiguration.matches
+          .map((e) => getRoute(e))
+          .toList();
+>>>>>>> Stashed changes
+
+  @override
+  void initState() {
+    super.initState();
+    _appStateNotifier = AppStateNotifier.instance;
+    _router = createRouter(_appStateNotifier);
+  }
+
+  void setThemeMode(ThemeMode mode) => setState(() {
+        _themeMode = mode;
+        FlutterFlowTheme.saveThemeMode(mode);
+      });
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'MIST AQI',
-          themeMode: themeProvider.themeMode,
-          theme: ThemeData(
-            brightness: Brightness.light,
-            primarySwatch: Colors.blue,
-            scaffoldBackgroundColor: Colors.grey[100],
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-          ),
-          darkTheme: ThemeData.dark().copyWith(
-            scaffoldBackgroundColor: Colors.black,
-            floatingActionButtonTheme: const FloatingActionButtonThemeData(
-              backgroundColor: Colors.deepPurple,
-            ),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-            ),
-          ),
-          home: const InitializeScreen(),
-        );
-      },
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'MIST',
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('en', '')],
+      theme: ThemeData(
+        brightness: Brightness.light,
+        useMaterial3: false,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: false,
+      ),
+      themeMode: _themeMode,
+      routerConfig: _router,
     );
   }
 }

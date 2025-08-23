@@ -11,7 +11,8 @@ class BellionChatDialog extends StatefulWidget {
   State<BellionChatDialog> createState() => _BellionChatDialogState();
 }
 
-class _BellionChatDialogState extends State<BellionChatDialog> with SingleTickerProviderStateMixin {
+class _BellionChatDialogState extends State<BellionChatDialog>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   bool _isLoading = false;
   late AnimationController _dotsController;
@@ -64,12 +65,14 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
         });
       } else {
         setState(() {
-          bellionChatMessages.add({'sender': 'bot', 'text': 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์'});
+          bellionChatMessages
+              .add({'sender': 'bot', 'text': 'Server error occurred.'});
         });
       }
     } catch (e) {
       setState(() {
-        bellionChatMessages.add({'sender': 'bot', 'text': 'เกิดข้อผิดพลาด: ${e.toString()}'});
+        bellionChatMessages
+            .add({'sender': 'bot', 'text': 'Error: ${e.toString()}'});
       });
     } finally {
       setState(() => _isLoading = false);
@@ -92,7 +95,9 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                 children: [
                   const Icon(Icons.chat, color: Color.fromARGB(255, 3, 71, 5)),
                   const SizedBox(width: 8),
-                  const Text('Bellion', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  const Text('Bellion',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.white)),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close, color: Colors.white),
@@ -119,16 +124,20 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 2, 27, 138),
+                              color: const Color(
+                                  0xFF004D40), // <-- Deep bluish green
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: AnimatedBuilder(
                               animation: _dotAnimation,
                               builder: (_, __) {
                                 final dots = '.' * _dotAnimation.value;
-                                return Text('กำลังพิมพ์$dots', style: const TextStyle(color: Colors.white));
+                                return Text('Typing$dots',
+                                    style:
+                                        const TextStyle(color: Colors.white));
                               },
                             ),
                           ),
@@ -141,7 +150,8 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                   final isMe = msg['sender'] == 'me';
 
                   return Align(
-                    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment:
+                        isMe ? Alignment.centerRight : Alignment.centerLeft,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,12 +166,16 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                         Flexible(
                           child: Container(
                             margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            constraints: BoxConstraints(
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.7),
                             decoration: BoxDecoration(
                               color: isMe
                                   ? const Color.fromARGB(255, 70, 74, 78)
-                                  : const Color.fromARGB(255, 2, 27, 138),
+                                  : const Color(
+                                      0xFF004D40), // <-- Deep bluish green for Bellion response
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -176,7 +190,6 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                 },
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: GestureDetector(
@@ -187,17 +200,17 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                       return AlertDialog(
                         backgroundColor: const Color.fromARGB(255, 30, 30, 30),
                         title: const Text(
-                          'ทำไม Bellion ถึงตอบช้า?',
+                          'Why is Bellion slow to respond?',
                           style: TextStyle(color: Colors.white),
                         ),
                         content: const Text(
-                          'Bellion นั้นรันอยู่บนเซิร์ฟเวอร์ฟรี ซึ่งอาจมีความล่าช้าในการรับและส่งข้อมูลเป็นเรื่องปกติ '
-                          'ขออภัยในความไม่สะดวก เราจะพยายามปรับปรุงให้ดีขึ้นครับ',
+                          'Bellion runs on a free server, so delays in receiving and sending data are normal. Sorry for the inconvenience, we will try to improve!',
                           style: TextStyle(color: Colors.white70),
                         ),
                         actions: [
                           TextButton(
-                            child: const Text('ปิด', style: TextStyle(color: Colors.greenAccent)),
+                            child: const Text('Close',
+                                style: TextStyle(color: Colors.greenAccent)),
                             onPressed: () => Navigator.of(context).pop(),
                           ),
                         ],
@@ -207,21 +220,23 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                 },
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 24, 24, 24),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color.fromARGB(255, 1, 20, 112), width: 1),
+                    border: Border.all(
+                        color: const Color.fromARGB(255, 1, 20, 112), width: 1),
                   ),
                   child: const Text(
-                    'ทำไม Bellion ถึงตอบช้า?',
-                    style: TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                    'Why is Bellion slow to respond?',
+                    style: TextStyle(
+                        color: Colors.greenAccent, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ),
             ),
-
             const Divider(height: 1, color: Colors.grey),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -232,7 +247,7 @@ class _BellionChatDialogState extends State<BellionChatDialog> with SingleTicker
                       controller: _controller,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                        hintText: 'พิมพ์ข้อความ...',
+                        hintText: 'Type your message...',
                         hintStyle: TextStyle(color: Colors.grey),
                         border: InputBorder.none,
                       ),
