@@ -150,7 +150,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
 
                     // Zoom buttons
                     Positioned(
-                      bottom: 365,
+                      bottom: 400,
                       right: 16,
                       child: Column(
                         children: [
@@ -174,7 +174,7 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                     // Bellion chat head (below the zoom buttons)
                     Positioned(
                       bottom:
-                          305, // Adjust this value to place it under the zoom buttons
+                          345, // Adjust this value to place it under the zoom buttons
                       right: 16,
                       child: GestureDetector(
                         onTap: () {
@@ -295,6 +295,19 @@ class _HomepageWidgetState extends State<HomepageWidget> {
                                     safeSetState(
                                         () => _model.dropDownValue = val);
                                     await _model.fetchAQIForProvince(val!);
+
+                                    // Move the map to the selected province
+                                    final selectedCoordinates =
+                                        provinceCoordinates[val];
+                                    if (selectedCoordinates != null) {
+                                      mapController.move(
+                                        latlong.LatLng(
+                                            selectedCoordinates.latitude,
+                                            selectedCoordinates.longitude),
+                                        mapController.camera
+                                            .zoom, // Keep the current zoom level
+                                      );
+                                    }
                                   },
                                   width: 300.0,
                                   height: 40.0,
