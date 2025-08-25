@@ -18,6 +18,12 @@ class AQIProvider extends ChangeNotifier {
 
   Timer? _autoRefreshTimer;
 
+  // เพิ่มเมธอด updateAQI
+  void updateAQI(String province, int aqi) {
+    provinceAQIs[province] = aqi;
+    notifyListeners(); // แจ้งเตือน UI เมื่อค่า AQI เปลี่ยนแปลง
+  }
+
   Future<void> fetchAllProvincesAQI() async {
     provinceAQIs.clear();
     List<Marker> markers = [];
@@ -25,7 +31,8 @@ class AQIProvider extends ChangeNotifier {
       final province = entry.key;
       final coord = entry.value;
       try {
-        final aqi = await _aqiService.fetchCurrentAQI(coord.latitude, coord.longitude);
+        final aqi =
+            await _aqiService.fetchCurrentAQI(coord.latitude, coord.longitude);
         provinceAQIs[province] = aqi;
         markers.add(
           Marker(
@@ -46,7 +53,8 @@ class AQIProvider extends ChangeNotifier {
                     size: 40,
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.black87,
                       borderRadius: BorderRadius.circular(4),
@@ -80,11 +88,18 @@ class AQIProvider extends ChangeNotifier {
     if (coord == null) return;
 
     try {
-      final aqi = await _aqiService.fetchCurrentAQI(coord.latitude, coord.longitude);
+      final aqi =
+          await _aqiService.fetchCurrentAQI(coord.latitude, coord.longitude);
       currentAQI = aqi;
 
-      aqiMarkers = [
-        Marker(
+      // เพิ่มหรืออัปเดตหมุดของจังหวัดที่ถูกเลือกใน aqiMarkers
+      final existingMarkerIndex = aqiMarkers.indexWhere(
+        (marker) => marker.point == coord,
+      );
+
+      if (existingMarkerIndex != -1) {
+        // อัปเดตหมุดที่มีอยู่แล้ว
+        aqiMarkers[existingMarkerIndex] = Marker(
           point: coord,
           width: 80,
           height: 80,
@@ -102,7 +117,8 @@ class AQIProvider extends ChangeNotifier {
                   size: 40,
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
                     color: Colors.black87,
                     borderRadius: BorderRadius.circular(4),
@@ -119,8 +135,49 @@ class AQIProvider extends ChangeNotifier {
               ],
             ),
           ),
-        ),
-      ];
+        );
+      } else {
+        // เพิ่มหมุดใหม่
+        aqiMarkers.add(
+          Marker(
+            point: coord,
+            width: 80,
+            height: 80,
+            child: GestureDetector(
+              onTap: () {
+                selectedProvince = province;
+                notifyListeners();
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    color: getAQIColor(aqi ?? 0),
+                    size: 40,
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black87,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      aqi != null ? '$aqi' : '-',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
 
       notifyListeners();
     } catch (e) {

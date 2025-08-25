@@ -10,7 +10,10 @@
         android:label="MIST"
         tools:replace="android:label"
         android:icon="@mipmap/ic_launcher"
-        android:requestLegacyExternalStorage="true">
+        android:requestLegacyExternalStorage="true"
+        android:supportsRtl="true"
+        android:theme="@style/LaunchTheme"
+        android:enableOnBackInvokedCallback="true">
 
         <activity
             android:name=".MainActivity"
