@@ -121,17 +121,6 @@ class AqiNotifier {
     }
   }
 
-  void startPeriodicCheck({
-    required double lat,
-    required double lon,
-    Duration interval = const Duration(minutes: 5),
-  }) {
-    _timer?.cancel();
-    _timer = Timer.periodic(interval, (_) async {
-      await checkAndNotify(lat, lon);
-    });
-  }
-
   void dispose() {
     _timer?.cancel();
   }

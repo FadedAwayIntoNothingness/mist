@@ -24,7 +24,6 @@ void main() async {
 
   await _requestPermissions();
   await _initNotifications();
-  
 
   Position? userPosition;
   try {
@@ -49,10 +48,7 @@ void main() async {
         aqiProvider.updateAQI('Bangkok', aqi); // อัปเดต UI ผ่าน AQIProvider
         await aqiNotifier.checkAndNotify(
             userPosition.latitude, userPosition.longitude);
-        aqiNotifier.startPeriodicCheck(
-          lat: userPosition.latitude,
-          lon: userPosition.longitude,
-        );
+
         print('✅ AQI check started with user location');
       } else {
         print('❌ Failed to fetch AQI');
@@ -140,60 +136,61 @@ class _MyAppState extends State<MyApp> {
     // สร้าง GoRouter
     _router = createRouter(_appStateNotifier);
 
-    // Start periodic AQI checks if aqiNotifier is available
-    widget.aqiNotifier.startPeriodicCheck(
-      lat: 13.736717, // Example latitude (Bangkok)
-      lon: 100.523186, // Example longitude (Bangkok)
+        // เรียก checkAndNotify ครั้งเดียวใน initState
+    widget.aqiNotifier.checkAndNotify(
+      13.736717, // Example latitude (Bangkok)
+      100.523186, // Example longitude (Bangkok)
     );
   }
 
-  @override
-  void dispose() {
-    widget.aqiNotifier?.dispose();
-    super.dispose();
-  } 
+    @override
+    void dispose() {
+      widget.aqiNotifier?.dispose();
+      super.dispose();
+    }
 
-  String getRoute([dynamic routeMatch]) {
-    // Accepts RouteMatchBase, RouteMatch, or null
-    final lastMatch =
-        routeMatch ?? _router.routerDelegate.currentConfiguration.last;
-    final matchList = lastMatch is ImperativeRouteMatch
-        ? lastMatch.matches
-        : _router.routerDelegate.currentConfiguration;
-    return matchList.uri.toString();
+    String getRoute([dynamic routeMatch]) {
+      // Accepts RouteMatchBase, RouteMatch, or null
+      final lastMatch =
+          routeMatch ?? _router.routerDelegate.currentConfiguration.last;
+      final matchList = lastMatch is ImperativeRouteMatch
+          ? lastMatch.matches
+          : _router.routerDelegate.currentConfiguration;
+      return matchList.uri.toString();
+    }
+
+    List<String> getRouteStack() =>
+        _router.routerDelegate.currentConfiguration.matches
+            .map((e) => getRoute(e))
+            .toList();
+
+    void setThemeMode(ThemeMode mode) => setState(() {
+          _themeMode = mode;
+          FlutterFlowTheme.saveThemeMode(mode);
+        });
+
+    @override
+    Widget build(BuildContext context) {
+      return MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        title: 'MIST',
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [Locale('en', '')],
+        theme: ThemeData(
+          brightness: Brightness.light,
+          useMaterial3: false,
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          useMaterial3: false,
+        ),
+        themeMode: _themeMode,
+        routerConfig: _router,
+      );
+    }
   }
 
-  List<String> getRouteStack() =>
-      _router.routerDelegate.currentConfiguration.matches
-          .map((e) => getRoute(e))
-          .toList();
-
-  void setThemeMode(ThemeMode mode) => setState(() {
-        _themeMode = mode;
-        FlutterFlowTheme.saveThemeMode(mode);
-      });
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'MIST',
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', '')],
-      theme: ThemeData(
-        brightness: Brightness.light,
-        useMaterial3: false,
-      ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        useMaterial3: false,
-      ),
-      themeMode: _themeMode,
-      routerConfig: _router,
-    );
-  }
-}
